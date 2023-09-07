@@ -69,7 +69,7 @@ async function createSpecs() {
 
   const contentCompletion = await openai.chat.completions.create({
     model: model,
-    max_tokens: 15,
+    max_tokens: 75,
     messages: [{ role: "user", content: contentPrompt }],
   });
 
