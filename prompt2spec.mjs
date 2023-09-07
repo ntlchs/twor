@@ -1,7 +1,7 @@
 import { config } from "dotenv";
-import fs from "fs";
+import fs from "fs/promises"; // Import promises API
+import fetch from "node-fetch"; // Import fetch if you are using it
 import { OpenAI } from "openai";
-import readline from "readline";
 import slugify from "slugify";
 
 config();
@@ -22,8 +22,6 @@ async function getEnv() {
     OPENAI_ORG_ID,
   };
 }
-const { OPENAI_API_KEY, OPENAI_ORG_ID } = await getEnv();
-const model = "gpt-3.5-turbo-0301";
 
 function createSlug(title) {
   return slugify(title, {
@@ -32,48 +30,95 @@ function createSlug(title) {
   });
 }
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
+async function getPrompt() {
+  const filePath = process.argv[2]; // Pega o primeiro argumento após o nome do script
 
-const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY,
-  organization: OPENAI_ORG_ID,
-  defaultHeaders: {
-    "Content-Type": "application/json",
-    "User-Agent": "OpenAI-Node-SDK",
-  },
-  fetch: fetch,
-  baseURL: "https://api.openai.com/v1/",
-});
+  if (!filePath || !filePath.endsWith(".txt")) {
+    console.error("Por favor, forneça um arquivo com extensão .txt.");
+    process.exit(1);
+  }
+
+  try {
+    const data = fs.readFile(filePath, "utf8");
+    return (await data).trim();
+  } catch (err) {
+    console.error("Erro ao ler o arquivo:", err);
+    process.exit(1);
+  }
+}
 
 async function createSpecs() {
-  const contentPrompt = ``;
+  const { OPENAI_API_KEY, OPENAI_ORG_ID } = await getEnv();
+
+  const openai = new OpenAI({
+    apiKey: OPENAI_API_KEY,
+    organization: OPENAI_ORG_ID,
+    defaultHeaders: {
+      "Content-Type": "application/json",
+      "User-Agent": "OpenAI-Node-SDK",
+    },
+    fetch: fetch,
+    baseURL: "https://api.openai.com/v1/",
+  });
+
+  const prePrompt = await getPrompt();
+  const contentPrompt = `Dado o seguinte prompt: "${prePrompt}", por favor, analise e identifique o sentimento predominante relacionado à teoria das cores. Os sentimentos possíveis são: Paixão, Energia, Calma, Confiança, Felicidade, Otimismo, Crescimento, Equilíbrio, Criatividade, Luxo.`;
+  console.log(contentPrompt);
+  console.log("Aguarde enquanto o GPT-3 analisa o prompt...");
+  const model = "gpt-3.5-turbo-0301";
+
   const contentCompletion = await openai.chat.completions.create({
     model: model,
-    max_tokens: 80,
+    max_tokens: 15,
     messages: [{ role: "user", content: contentPrompt }],
   });
 
   const content = contentCompletion.choices[0]?.message?.content;
 
-  const specs = `${content}`;
+  const possibleSentiments = [
+    "Paixão",
+    "Energia",
+    "Calma",
+    "Confiança",
+    "Felicidade",
+    "Otimismo",
+    "Crescimento",
+    "Equilíbrio",
+    "Criatividade",
+    "Luxo",
+  ];
+  let identifiedSentiment = "Não identificado";
 
+  for (const sentiment of possibleSentiments) {
+    if (content.toLowerCase().includes(sentiment.toLowerCase())) {
+      identifiedSentiment = sentiment;
+      break;
+    }
+  }
+
+  const jsonOutput = {
+    identifiedSentiment,
+    analysis: content,
+  };
+
+  const title = `ColorSentimentAnalysis_${Math.random()}`;
   const slug = createSlug(title);
-  console.log(slug);
+  const filePath = `./${slug}.json`;
 
-  const filePath = `/${slug}.json}`;
-
-  fs.writeFile(filePath, specs, (err) => {
+  fs.writeFile(filePath, JSON.stringify(jsonOutput, null, 2), (err) => {
     if (err) {
       console.error("Ocorreu um erro ao salvar o arquivo:", err);
     } else {
-      console.log(`Artigo salvo com sucesso em ${filePath}`);
+      console.log(`Arquivo salvo com sucesso em ${filePath}`);
     }
   });
-
-  rl.close();
 }
 
-createSpecs();
+async function main() {
+  createSpecs();
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
