@@ -1,8 +1,7 @@
 import { config } from "dotenv";
-import fs from "fs/promises"; // Import promises API
-import fetch from "node-fetch"; // Import fetch if you are using it
+import fetch from "node-fetch";
 import { OpenAI } from "openai";
-import slugify from "slugify";
+import { possibleSentiments } from "./utils.mjs";
 
 config();
 
@@ -23,31 +22,7 @@ async function getEnv() {
   };
 }
 
-function createSlug(title) {
-  return slugify(title, {
-    lower: true, // convert to lower case
-    strict: true, // remove characters that could result in unexpected behavior, such as spaces
-  });
-}
-
-async function getPrompt() {
-  const filePath = process.argv[2]; // Pega o primeiro argumento após o nome do script
-
-  if (!filePath || !filePath.endsWith(".txt")) {
-    console.error("Por favor, forneça um arquivo com extensão .txt.");
-    process.exit(1);
-  }
-
-  try {
-    const data = fs.readFile(filePath, "utf8");
-    return (await data).trim();
-  } catch (err) {
-    console.error("Erro ao ler o arquivo:", err);
-    process.exit(1);
-  }
-}
-
-async function createSpecs() {
+export async function createSpecs(prePrompt) {
   const { OPENAI_API_KEY, OPENAI_ORG_ID } = await getEnv();
 
   const openai = new OpenAI({
@@ -61,10 +36,8 @@ async function createSpecs() {
     baseURL: "https://api.openai.com/v1/",
   });
 
-  const prePrompt = await getPrompt();
   const contentPrompt = `Dado o seguinte prompt: "${prePrompt}", por favor, analise e identifique o sentimento predominante relacionado à teoria das cores. Os sentimentos possíveis são: Paixão, Energia, Calma, Confiança, Felicidade, Otimismo, Crescimento, Equilíbrio, Criatividade, Luxo.`;
-  console.log(contentPrompt);
-  console.log("Aguarde enquanto o GPT-3 analisa o prompt...");
+  console.log(`Selected prompt: ${contentPrompt}\n`);
   const model = "gpt-3.5-turbo-0301";
 
   const contentCompletion = await openai.chat.completions.create({
@@ -75,18 +48,6 @@ async function createSpecs() {
 
   const content = contentCompletion.choices[0]?.message?.content;
 
-  const possibleSentiments = [
-    "Paixão",
-    "Energia",
-    "Calma",
-    "Confiança",
-    "Felicidade",
-    "Otimismo",
-    "Crescimento",
-    "Equilíbrio",
-    "Criatividade",
-    "Luxo",
-  ];
   let identifiedSentiment = "Não identificado";
 
   for (const sentiment of possibleSentiments) {
@@ -101,21 +62,12 @@ async function createSpecs() {
     analysis: content,
   };
 
-  const title = `ColorSentimentAnalysis_${Math.random()}`;
-  const slug = createSlug(title);
-  const filePath = `./${slug}.json`;
-
-  fs.writeFile(filePath, JSON.stringify(jsonOutput, null, 2), (err) => {
-    if (err) {
-      console.error("Ocorreu um erro ao salvar o arquivo:", err);
-    } else {
-      console.log(`Arquivo salvo com sucesso em ${filePath}`);
-    }
-  });
+  return jsonOutput;
 }
 
 async function main() {
-  createSpecs();
+  const specs = createSpecs();
+  return specs;
 }
 
 main().catch((error) => {
