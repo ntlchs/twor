@@ -64,13 +64,3 @@ export async function createSpecs(prePrompt) {
 
   return jsonOutput;
 }
-
-async function main() {
-  const specs = createSpecs();
-  return specs;
-}
-
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});

@@ -1,6 +1,7 @@
 import fs from "fs/promises";
 import slugify from "slugify";
 import { createSpecs } from "./prompt2spec.mjs";
+import { createConfig } from "./spec2config.mjs";
 
 function createSlug(title) {
   return slugify(title, {
@@ -18,15 +19,15 @@ async function getPrompt() {
   }
 
   try {
-    const data = fs.readFile(filePath, "utf8");
-    return (await data).trim();
+    const { data } = await fs.readFile(filePath, "utf8");
+    return data;
   } catch (err) {
     console.error("Erro ao ler o arquivo:", err);
     process.exit(1);
   }
 }
 
-const writePromptJson = (jsonOutput) => {
+const writeJson = (jsonOutput) => {
   const slug = createSlug(`ColorSentimentAnalysis_${Math.random()}`);
   const filePath = `./${slug}.json`;
 
@@ -43,7 +44,8 @@ async function main() {
   const prompt = await getPrompt();
   const jsonSpecs = await createSpecs(prompt);
   console.log(jsonSpecs);
-  writePromptJson(jsonSpecs);
+  const palette = await createConfig(jsonSpecs);
+  writeJson(palette);
 }
 
 main().catch((error) => {
