@@ -11,12 +11,15 @@ Place your OPENAI_API_KEY and OPENAI_ORG_ID in the .env file
 Run TWor with a prompt file as argument.
 
 ```
-TWor prompt.txt > tailwind.config.js
+npm run twor prompt.txt
 ```
+
+And the config will be written to prompt.config.js
 
 ## DESCRIPTION
 
-TWor receives a prompt file and prints it into stdout. You can specify the output file by using the > operator.
+TWor receives a prompt file and writes a tailwind config based on what the
+prompt specifies.
 
 ## PROMPT FILE
 

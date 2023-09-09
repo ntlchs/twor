@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "twor": "node twor.mjs"
+  },
   "dependencies": {
     "@iyashasgowda/color-harmony": "^0.0.2",
     "axios": "^1.5.0",
