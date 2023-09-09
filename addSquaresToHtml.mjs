@@ -1,6 +1,21 @@
-import * as fs from 'fs';
+import * as fs from "fs";
 
-export const addColorSquares = async (colors, prompt, sentiment, outputPath) => {
+const initialHtml = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Colors</title>
+  </head>
+  <body></body>
+</html>`;
+
+export const addColorSquares = async (
+  colors,
+  prompt,
+  sentiment,
+  outputPath
+) => {
   // Ler arquivo outputPath
   let htmlContent;
   if (fs.existsSync(outputPath)) {
@@ -11,7 +26,7 @@ export const addColorSquares = async (colors, prompt, sentiment, outputPath) => 
       return;
     }
   } else {
-    htmlContent = ''
+    htmlContent = initialHtml;
   }
 
   // Criar a nova div com os grupos de cores
@@ -34,7 +49,9 @@ export const addColorSquares = async (colors, prompt, sentiment, outputPath) => 
   // Salvar o conteúdo modificado de volta no arquivo outputPath
   try {
     fs.writeFileSync(outputPath, htmlContent);
-    console.log(`Div com quadrados coloridos adicionada com sucesso em ${outputPath}.`);
+    console.log(
+      `Div com quadrados coloridos adicionada com sucesso em ${outputPath}.`
+    );
   } catch (err) {
     console.error(`Erro ao salvar o arquivo ${outputPath}:`, err);
   }
