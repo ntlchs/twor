@@ -1,13 +1,17 @@
-import fs from "fs/promises";
+import * as fs from 'fs';
 
-export const addColorSquares = async (colors, prompt, sentiment) => {
-  // Ler o arquivo index.html
+export const addColorSquares = async (colors, prompt, sentiment, outputPath) => {
+  // Ler arquivo outputPath
   let htmlContent;
-  try {
-    htmlContent = await fs.readFile("index.html", "utf8");
-  } catch (err) {
-    console.error("Erro ao ler o arquivo index.html:", err);
-    return;
+  if (fs.existsSync(outputPath)) {
+    try {
+      htmlContent = fs.readFileSync(outputPath, "utf8");
+    } catch (err) {
+      console.error(`Erro ao ler o arquivo ${outputPath}:`, err);
+      return;
+    }
+  } else {
+    htmlContent = ''
   }
 
   // Criar a nova div com os grupos de cores
@@ -27,11 +31,11 @@ export const addColorSquares = async (colors, prompt, sentiment) => {
   // Inserir a nova div antes do fechamento do body
   htmlContent = htmlContent.replace("</body>", `${newDiv}\n</body>`);
 
-  // Salvar o conteúdo modificado de volta no arquivo index.html
+  // Salvar o conteúdo modificado de volta no arquivo outputPath
   try {
-    await fs.writeFile("index.html", htmlContent);
-    console.log("Div com quadrados coloridos adicionada com sucesso.");
+    fs.writeFileSync(outputPath, htmlContent);
+    console.log(`Div com quadrados coloridos adicionada com sucesso em ${outputPath}.`);
   } catch (err) {
-    console.error("Erro ao salvar o arquivo index.html:", err);
+    console.error(`Erro ao salvar o arquivo ${outputPath}:`, err);
   }
 };

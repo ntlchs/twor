@@ -57,7 +57,8 @@ async function main() {
     await addColorSquares(
       formattedPalette,
       prompt,
-      jsonSpecs.identifiedSentiment
+      jsonSpecs.identifiedSentiment,
+      `${parsedFilePath.name}.html`,
     );
   } catch (error) {
     console.error(error);
