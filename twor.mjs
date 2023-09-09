@@ -1,7 +1,8 @@
 import fs from "fs/promises";
 import slugify from "slugify";
+import { addColorSquares } from "./addSquaresToHtml.mjs";
 import { createSpecs } from "./prompt2spec.mjs";
-import { createConfig } from "./spec2config.mjs";
+import { spec2config } from "./spec2config.mjs";
 
 function createSlug(title) {
   return slugify(title, {
@@ -19,7 +20,7 @@ async function getPrompt() {
   }
 
   try {
-    const { data } = await fs.readFile(filePath, "utf8");
+    const data = await fs.readFile(filePath, "utf8");
     return data;
   } catch (err) {
     console.error("Erro ao ler o arquivo:", err);
@@ -27,28 +28,38 @@ async function getPrompt() {
   }
 }
 
-const writeJson = (jsonOutput) => {
+const writeJson = async (jsonOutput) => {
+  if (jsonOutput === undefined) {
+    console.error("O jsonOutput está indefinido.");
+    return;
+  }
+
   const slug = createSlug(`ColorSentimentAnalysis_${Math.random()}`);
   const filePath = `./${slug}.json`;
 
-  fs.writeFile(filePath, JSON.stringify(jsonOutput, null, 2), (err) => {
-    if (err) {
-      console.error("Ocorreu um erro ao salvar o arquivo:", err);
-    } else {
-      console.log(`Arquivo salvo com sucesso em ${filePath}`);
-    }
-  });
+  try {
+    await fs.writeFile(filePath, JSON.stringify(jsonOutput, null, 2));
+    console.log(`Arquivo salvo com sucesso em ${filePath}`);
+  } catch (err) {
+    console.error("Ocorreu um erro ao salvar o arquivo:", err);
+  }
 };
 
 async function main() {
-  const prompt = await getPrompt();
-  const jsonSpecs = await createSpecs(prompt);
-  console.log(jsonSpecs);
-  const palette = await createConfig(jsonSpecs);
-  writeJson(palette);
+  try {
+    const prompt = await getPrompt();
+    const jsonSpecs = await createSpecs(prompt);
+    const formattedPalette = await spec2config(jsonSpecs);
+    console.log(formattedPalette);
+    await addColorSquares(
+      formattedPalette,
+      prompt,
+      jsonSpecs.identifiedSentiment
+    );
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+main();
