@@ -1,10 +1,9 @@
+import { writeFileSync } from "fs";
 import fs from "fs/promises";
-import * as path from 'path';
+import * as path from "path";
 import slugify from "slugify";
 import { addColorSquares } from "./addSquaresToHtml.mjs";
-import { createSpecs } from "./prompt2spec.mjs";
 import { spec2config } from "./spec2config.mjs";
-import { writeFileSync } from "fs";
 
 function createSlug(title) {
   return slugify(title, {
@@ -14,7 +13,6 @@ function createSlug(title) {
 }
 
 async function getPrompt(filePath) {
-
   if (!filePath || !filePath.endsWith(".txt")) {
     console.error("Por favor, forneça um arquivo com extensão .txt.");
     process.exit(1);
@@ -46,19 +44,50 @@ const writeJson = async (jsonOutput) => {
   }
 };
 
-async function main() {
+// async function main() {
+//   try {
+//     const filePath = process.argv[2];
+//     const prompt = await getPrompt(filePath);
+//     const jsonSpecs = await createSpecs(prompt);
+//     const formattedPalette = await spec2config(jsonSpecs);
+//     console.log({ jsonSpecs });
+//     const parsedFilePath = path.parse(filePath);
+//     writeFileSync(
+//       `${parsedFilePath.name}.config.js`,
+//       JSON.stringify(formattedPalette)
+//     );
+//     await addColorSquares(
+//       formattedPalette,
+//       prompt,
+//       jsonSpecs.identifiedSentiment,
+//       `${parsedFilePath.name}.html`
+//     );
+//   } catch (error) {
+//     console.error(error);
+//     process.exit(1);
+//   }
+// }
+
+async function test() {
+  const testJson = {
+    identifiedSentiment: "Energia",
+    analysis:
+      "O sentimento predominante relacionado à teoria das cores para uma página de vendas de uma loja de artigos de esporte pode ser Energia. Cores brilhantes e saturadas, como vermelho, laranja e amarelo, são frequentemente usadas para evocar sentimentos de excitação e força fís",
+  };
   try {
     const filePath = process.argv[2];
     const prompt = await getPrompt(filePath);
-    const jsonSpecs = await createSpecs(prompt);
-    const formattedPalette = await spec2config(jsonSpecs);
-    const parsedFilePath = path.parse(filePath)
-    writeFileSync(`${parsedFilePath.name}.config.js`, JSON.stringify(formattedPalette));
+    const formattedPalette = await spec2config(testJson);
+    const parsedFilePath = path.parse(filePath);
+    writeFileSync(
+      `${parsedFilePath.name}.config.js`,
+      JSON.stringify(formattedPalette)
+    );
     await addColorSquares(
       formattedPalette,
       prompt,
-      jsonSpecs.identifiedSentiment,
-      `${parsedFilePath.name}.html`,
+      testJson.identifiedSentiment,
+      `${parsedFilePath.name}.html`
     );
   } catch (error) {
     console.error(error);
@@ -66,4 +95,5 @@ async function main() {
   }
 }
 
-main();
+// main();
+test();

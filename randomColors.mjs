@@ -1,41 +1,66 @@
-import { colorRgb } from "./utils.mjs";
+import chroma from "chroma-js";
 
-const getRandomInt = (min, max) => {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+export const colorRgb = {
+  RED: { r: 255, g: 0, b: 0 },
+  ORANGE: { r: 255, g: 165, b: 0 },
+  BLUE: { r: 0, g: 0, b: 255 },
+  INDIGO: { r: 75, g: 0, b: 130 },
+  YELLOW: { r: 255, g: 255, b: 0 },
+  GREEN: { r: 0, g: 128, b: 0 },
+  TEAL: { r: 0, g: 128, b: 128 },
+  GRAY: { r: 128, g: 128, b: 128 },
+  PURPLE: { r: 128, g: 0, b: 128 },
+  ROSE: { r: 255, g: 0, b: 255 },
 };
 
-const adjustColor = (color, minAmount, maxAmount) => {
-  const amount = getRandomInt(minAmount, maxAmount);
+const identifyBaseShade = (hexColor) => {
+  const luminance = chroma(hexColor).luminance();
+  if (luminance > 0.8) return "100";
+  if (luminance > 0.6) return "300";
+  if (luminance > 0.4) return "500";
+  if (luminance > 0.2) return "700";
+  return "900";
+};
+
+export const generateShades = (hexColor) => {
+  const baseShade = identifyBaseShade(hexColor);
+  const shades = {};
+
+  for (let i = 1; i <= 9; i++) {
+    const shade = `${i}00`;
+    if (shade === baseShade) {
+      shades[shade] = hexColor;
+      continue;
+    }
+
+    const diff = parseInt(baseShade) - parseInt(shade);
+    const newColor = chroma(hexColor)
+      .set("lab.l", "+", diff * 5)
+      .hex();
+    shades[shade] = newColor;
+  }
+
   return {
-    r: Math.min(255, Math.max(0, color.r + amount)),
-    g: Math.min(255, Math.max(0, color.g + amount)),
-    b: Math.min(255, Math.max(0, color.b + amount)),
+    baseShade,
+    shades,
   };
 };
 
-// Function to generate 5 shades for each color
-const generateShades = (color) => {
-  return [
-    adjustColor(color, -50, -30),
-    adjustColor(color, -29, -10),
-    color,
-    adjustColor(color, 10, 29),
-    adjustColor(color, 30, 50),
-  ];
-};
+export const getRandomShade = (inputColorName) => {
+  const colorShades = {};
+  for (const [colorName, color] of Object.entries(colorRgb)) {
+    colorShades[colorName] = generateShades(color).shades;
+  }
 
-// Create shades for each color in colorRgb
-const colorShades = {};
-for (const [colorName, color] of Object.entries(colorRgb)) {
-  colorShades[colorName] = generateShades(color);
-}
+  const shades = colorShades[inputColorName];
 
-// Function to randomly select a shade based on the initial color name
-export const getRandomShade = (colorName) => {
-  const shades = colorShades[colorName];
   if (!shades) {
     return null; // Return null if the color name is not found
   }
-  const randomIndex = Math.floor(Math.random() * shades.length);
-  return shades[randomIndex];
+
+  const shadeKeys = Object.keys(shades);
+  const randomIndex = Math.floor(Math.random() * shadeKeys.length);
+  const randomShadeKey = shadeKeys[randomIndex];
+
+  return shades[randomShadeKey];
 };

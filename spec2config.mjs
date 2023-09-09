@@ -1,7 +1,6 @@
 import Harmony from "@iyashasgowda/color-harmony";
-import axios from "axios";
 import rbgHex from "rgb-hex";
-import { getRandomShade } from "./randomColors.mjs";
+import { generateShades, getRandomShade } from "./randomColors.mjs";
 import { colorRgb } from "./utils.mjs";
 
 const generatePalette = (color) => {
@@ -41,40 +40,42 @@ function chooseColorBasedOnSentiment(sentiment) {
   return colorMap[sentiment] || "unknown";
 }
 
+function formatRgb(rgb) {
+  return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+}
+
 function createPalette(jsonSpecs) {
   const sentimento = jsonSpecs.identifiedSentiment;
   const sentiment = sentimentMap[sentimento];
   const color = chooseColorBasedOnSentiment(sentiment);
+  // Example output: { color: 'red' }
 
-  // Convert the color name to uppercase and then get a random shade
   const randomRgbFromColor = getRandomShade(color.toUpperCase());
+  // Example output: { randomRgbFromColor: { r: 255, g: 165, b: 0 }
 
   // Log the random shade for debugging
-  console.log({ randomRgbFromColor });
 
   // If a random shade is found, use it as the base for generating the palette
   const baseColorForPalette = randomRgbFromColor
     ? randomRgbFromColor
     : colorRgb[color.toUpperCase()];
-  const palette = generatePalette(formatRgb(baseColorForPalette));
+
+  const palette = generatePalette(baseColorForPalette);
+  // Example output: [ { r: 255, g: 165, b: 0 }, { r: 0, g: 255, b: 0 }, ... ]
 
   return palette;
 }
 
-function formatRgb(rgb) {
-  return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
-}
-
-async function fetchColorShades(color, hexValue) {
-  try {
-    const url = `https://www.tints.dev/api/${color}/${hexValue}`;
-    const response = await axios.get(url);
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching color shades: ${error}`);
-    return null;
-  }
-}
+// async function fetchColorShades(color, hexValue) {
+//   try {
+//     const url = `https://www.tints.dev/api/${color}/${hexValue}`;
+//     const response = await axios.get(url);
+//     return response.data;
+//   } catch (error) {
+//     console.error(`Error fetching color shades: ${error}`);
+//     return null;
+//   }
+// }
 
 function rgbToHex(rgb) {
   const hex = rbgHex(rgb);
@@ -89,12 +90,15 @@ export async function spec2config(jsonSpecs) {
     const hex = rgbToHex(formattedRgb);
     formattedPalette.push(hex);
   }
+  // Example output: [ '#ffa500', '#00ff00', ... ]
 
   const colorShades = [];
 
-  for (let color of formattedPalette) {
-    const hexValue = color.replace("#", "");
-    const shades = await fetchColorShades("color", hexValue);
+  for (let hexColor of formattedPalette) {
+    const shades = generateShades(hexColor);
+    console.log({ hexColor, shades });
+    // const hexValue = color.replace("#", "");
+    // const shades = await fetchColorShades("color", hexValue);
     colorShades.push(shades);
   }
 
